@@ -5,7 +5,6 @@ describe("FE basics", () => {
     before(async () => {
         await wdi5.goTo("#travel-process");
         await browser.pause(2000) //wait for the iframe to load
-        await ui5Service.injectUI5()
         let frame = await browser.$('#application-travel-process');
         await browser.switchToFrame(frame)
         await browser.pause(1000)
