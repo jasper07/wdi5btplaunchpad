@@ -3,14 +3,14 @@ exports.config = {
     // wdi5 Configuration
     // ====================
     //
-    // wdi5: {
-    //     screenshotPath: require("path").join("some", "dir", "for", "screenshots"),c // [optional] {string}, default: ""
-    //     screenshotsDisabled: false, // [optional] {boolean}, default: false; if set to true, screenshots won't be taken and not written to file system
-    //     logLevel: "error", // [optional] error | verbose | silent, default: "error"
-    //     skipInjectUI5OnStart: false, // [optional] {boolean}, default: false; true when UI5 is not on the start page, you need to later call <wdioUI5service>.injectUI5() manually
-    //     waitForUI5Timeout: 15000 // [optional] {number}, default: 15000; maximum waiting time in milliseconds while checking for UI5 availability
-    // },
-    //
+    wdi5: {
+        // screenshotPath: require("path").join("some", "dir", "for", "screenshots"),c // [optional] {string}, default: ""
+        // screenshotsDisabled: false, // [optional] {boolean}, default: false; if set to true, screenshots won't be taken and not written to file system
+        logLevel: "error", // [optional] error | verbose | silent, default: "error"
+        skipInjectUI5OnStart: false, // [optional] {boolean}, default: false; true when UI5 is not on the start page, you need to later call <wdioUI5service>.injectUI5() manually
+        waitForUI5Timeout: 30000 // [optional] {number}, default: 15000; maximum waiting time in milliseconds while checking for UI5 availability
+    },
+    
     // ====================
     // Runner Configuration
     // ====================
@@ -74,7 +74,13 @@ exports.config = {
                         ? ["window-size=1440,800", "--auto-open-devtools-for-tabs"]
                         : ["window-size=1440,800"]
             },
-            acceptInsecureCerts: true
+            acceptInsecureCerts: true,
+            "wdi5:authentication": {
+                provider: "BTP",
+                usernameSelector: "#j_username", //> optional; default: "#j_username"
+                passwordSelector: "#j_password", //> optional; default: "#j_password"
+                submitSelector: "#logOnFormSubmit" //> optional; default: "#logOnFormSubmit"
+            }
             // If outputDir is provided WebdriverIO can capture driver session logs
             // it is possible to configure which logTypes to include/exclude.
             // excludeDriverLogs: ['*'], // pass '*' to exclude all driver session logs
@@ -112,10 +118,10 @@ exports.config = {
     // with `/`, the base url gets prepended, not including the path portion of your baseUrl.
     // If your `url` parameter starts without a scheme or `/` (like `some/path`), the base url
     // gets prepended directly.
-    baseUrl: "http://localhost:8080/index.html",
+    baseUrl: 'https://cswdev.launchpad.cfapps.eu10.hana.ondemand.com/site',
     //
     // Default timeout for all waitFor* commands.
-    waitforTimeout: 10000,
+    waitforTimeout: 20000,
     //
     // Default timeout in milliseconds for request
     // if browser driver or grid doesn't send response
@@ -159,7 +165,7 @@ exports.config = {
     mochaOpts: {
         ui: "bdd",
         timeout: process.argv.indexOf("--debug") > -1 ? 600000 : 60000
-    }
+    },
     //
     // =====
     // Hooks
@@ -212,8 +218,13 @@ exports.config = {
      * @param {Array.<String>} specs        List of spec file paths that are to be run
      * @param {Object}         browser      instance of created browser/device session
      */
-    // before: function (capabilities, specs) {
-    // },
+    before: function (capabilities, specs, browser) {
+        browser.setCookies({
+            name: 'skipPasswordlessAuthnDeviceConfig',
+            value: 'true',
+            domain: 'aqywyhweh.accounts.ondemand.com'
+        })
+    }
     /**
      * Runs before a WebdriverIO command gets executed.
      * @param {String} commandName hook command name
