@@ -2,13 +2,21 @@ const { wdi5, default: _ui5Service } = require("wdio-ui5-service");
 const ui5Service = new _ui5Service();
 describe("FE basics", () => {
     let FioriElementsFacade
+    let FioriElementsFacadeLaunchpad
     before(async () => {
-        await wdi5.goTo("#travel-process");
-        await browser.pause(2000) //wait for the iframe to load
-        let frame = await browser.$('#application-travel-process');
-        await browser.switchToFrame(frame)
-        await browser.pause(1000)
+        await wdi5.goTo("#travel-process")
+            
+        // for navigating back
+        FioriElementsFacadeLaunchpad = await browser.fe.initialize({
+            onTheShell: {
+                Shell: {}
+            }
+        })
+    
+        await $("iframe").waitForExist()
+        await browser.switchToFrame(0) //> only 1 frame in the game
         await ui5Service.injectUI5()
+        
         FioriElementsFacade = await browser.fe.initialize({
             onTheMainPage: {
                 ListReport: {
@@ -45,26 +53,22 @@ describe("FE basics", () => {
 
     it("should see the Object Pages load and then returns to list", async () => {
         await FioriElementsFacade.execute((Given, When, Then) => {
-            When.onTheMainPage.onTable().iPressRow({ Travel: "4,133" })
+            When.onTheMainPage.onTable().iPressRow(1)
             Then.onTheDetailPage.iSeeThisPage()
 
             When.onTheDetailPage.onTable({ property: "to_Booking" }).iPressRow({ BookingID: "1" });
             Then.onTheItemPage.iSeeThisPage();
-            // When.onTheShell.iNavigateBack()
-        })
-        await browser.execute(() => {
-            // the child communicates with the parents via messages
-            sap.ushell.Container.getService("CrossApplicationNavigation").historyBack()
+            
         })
 
-        await FioriElementsFacade.execute((Given, When, Then) => {
-            Then.onTheDetailPage.iSeeThisPage()
+        await browser.switchToParentFrame()
+        await FioriElementsFacadeLaunchpad.execute((Given, When, Then) => {
+            
+            When.onTheShell.iNavigateBack()
+            When.onTheShell.iNavigateBack()
+            
         })
-
-        await browser.execute(() => {
-            // the child communicates with the parents via messages
-            sap.ushell.Container.getService("CrossApplicationNavigation").historyBack()
-        })
+        await browser.switchToFrame(0)
 
         await FioriElementsFacade.execute((Given, When, Then) => {
             Then.onTheMainPage.iSeeThisPage()
@@ -131,13 +135,13 @@ describe("FE basics", () => {
             Then.onTheDetailPage.onFooter().iCheckDraftStateSaved();
             When.onTheDetailPage.onFooter().iExecuteSave();
             Then.onTheDetailPage.iSeeThisPage().and.iSeeObjectPageInDisplayMode();
-            // When.onTheShell.iNavigateBack()
         })
 
-        await browser.execute(() => {
-            // the child communicates with the parents via messages
-            sap.ushell.Container.getService("CrossApplicationNavigation").historyBack()
+        await browser.switchToParentFrame()
+        await FioriElementsFacadeLaunchpad.execute((Given, When, Then) => {
+            When.onTheShell.iNavigateBack()
         })
+        await browser.switchToFrame(0)
 
     })
 
@@ -167,6 +171,4 @@ describe("FE basics", () => {
         })
     })
 
-    after(async () => {
-    })
 })
